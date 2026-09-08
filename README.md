@@ -17,7 +17,7 @@ the database level rather than guessed at in application code.
 Built incrementally, phase by phase, each reviewed before moving on:
 
 - [x] **Phase 1** — scaffold, Docker Compose, database schema
-- [ ] Phase 2 — auth (register, login, JWT, roles)
+- [x] **Phase 2** — auth (register, login, JWT, roles)
 - [ ] Phase 3 — booking API with concurrency handling + concurrency test
 - [ ] Phase 4 — Angular shell, routing, auth guards
 - [ ] Phase 5 — calendar UI and booking flow
@@ -80,6 +80,40 @@ Full write-up with the concurrency test and benchmarks lands in Phase 3.
   constraint is one migration away from a new status value.
 
 Full schema: [`backend/src/main/resources/db/migration/V1__init_schema.sql`](backend/src/main/resources/db/migration/V1__init_schema.sql).
+
+### Auth (Phase 2)
+
+- **JWTs in httpOnly cookies, not `localStorage` + `Authorization` header.**
+  `localStorage` is readable by any JS running on the page, so a single XSS
+  hole anywhere (including a third-party script) can exfiltrate the token.
+  An httpOnly cookie can't be read by JS at all. The trade-off: cookies are
+  attached to requests automatically by the browser, which reopens CSRF —
+  so CSRF protection stays on (`CookieCsrfTokenRepository`), and
+  `SameSite=Lax` withholds the cookie on genuinely cross-site requests.
+- **Access + refresh token pair**, discriminated by a `type` claim inside
+  the token itself. The access token is short-lived (15 min default) and
+  sent on every request; the refresh token is long-lived (7 days) and
+  scoped via cookie `path` to only the one endpoint that reads it
+  (`/api/auth/refresh`), so a stolen access token is a short-lived problem
+  and the long-lived credential isn't presented to the rest of the API.
+- **HS256, not RS256** — this service both issues and validates its own
+  tokens, so there's no scenario yet where a *different* service needs to
+  verify a token without being trusted to mint one. RS256 earns its keep
+  the moment that stops being true (e.g. a separate notification service
+  validating tokens it never issues).
+- **Registration always creates a `PATIENT`.** `RegisterRequest` has no
+  role field at all — there is nothing for a client to send that would
+  create a `DOCTOR` or `ADMIN` account. The one `ADMIN` account is seeded
+  once on first boot (`AdminSeeder`); every `DOCTOR` account after that is
+  created by an admin, in the Phase 7 admin UI.
+- **Wrong password and unknown email return the identical 401** with the
+  identical message. Distinguishing them (e.g. "no account with that
+  email" vs "wrong password") lets an attacker enumerate which emails are
+  registered.
+- **BCrypt over Argon2id** — Argon2id is OWASP's current top recommendation,
+  but needs its own dependency and manual memory/parallelism tuning. BCrypt
+  ships with Spring Security, is adaptive-cost, and remains a fully
+  defensible default for this project's threat model.
 
 ### Dependencies beyond the required stack, and why
 
