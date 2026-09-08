@@ -25,6 +25,11 @@ Built incrementally, phase by phase, each reviewed before moving on:
 - [ ] Phase 7 — reschedule, cancel, doctor and admin views
 - [ ] Phase 8 — this README's full architecture write-up
 
+No live demo yet — a Java backend + Postgres needs real hosting (not
+possible via GitHub Pages, unlike this author's other portfolio
+projects), and there's no UI to demo before Phase 5. Revisit once the
+Angular frontend and booking flow exist.
+
 ## Running it
 
 ```bash
