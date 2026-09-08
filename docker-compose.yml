@@ -26,6 +26,13 @@ services:
       DB_NAME: clinic
       DB_USER: clinic
       DB_PASSWORD: clinic
+      # Dev-only values — all overridable, none of these belong in a real
+      # deployment as-is. JWT_SECRET in particular must be replaced.
+      JWT_SECRET: dev-only-secret-change-me-replace-with-a-real-256-bit-key-before-any-real-deployment
+      COOKIES_SECURE: "false"
+      FRONTEND_ORIGIN: http://localhost:4200
+      ADMIN_EMAIL: admin@clinic.local
+      ADMIN_PASSWORD: changeme123
     ports:
       - "8080:8080"
 

@@ -24,3 +24,19 @@ spring:
 
 server:
   port: ${SERVER_PORT:8080}
+
+app:
+  jwt:
+    # Dev-only default — 256+ bits, but a fixed, public string. Override
+    # with a real secret via JWT_SECRET before this ever leaves a laptop.
+    secret: ${JWT_SECRET:dev-only-secret-change-me-replace-with-a-real-256-bit-key-before-any-real-deployment}
+    access-token-ttl-minutes: ${JWT_ACCESS_TTL_MINUTES:15}
+    refresh-token-ttl-days: ${JWT_REFRESH_TTL_DAYS:7}
+  cookies:
+    # false for local http://localhost dev; true (the CookieService default)
+    # once this is ever served over https.
+    secure: ${COOKIES_SECURE:false}
+  frontend-origin: ${FRONTEND_ORIGIN:http://localhost:4200}
+  admin:
+    email: ${ADMIN_EMAIL:admin@clinic.local}
+    password: ${ADMIN_PASSWORD:changeme123}
