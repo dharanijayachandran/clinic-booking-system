@@ -1,0 +1,57 @@
+# Render Blueprint — one-click deploy of the backend + a free Postgres.
+# https://render.com/docs/blueprint-spec
+#
+# Free-tier trade-offs, accepted deliberately for a portfolio demo:
+#   - The web service spins down after 15 min idle; the first request after
+#     that takes ~30-50s to wake it back up.
+#   - The free Postgres database expires after 30 days. When it does,
+#     recreate it and this blueprint's Flyway migration (V1__init_schema.sql)
+#     recreates the schema automatically on the next deploy — no data is
+#     precious here, it's a demo database.
+
+databases:
+  - name: clinic-booking-db
+    plan: free
+    databaseName: clinic
+    user: clinic
+
+services:
+  - type: web
+    name: clinic-booking-backend
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    envVars:
+      - key: PORT
+        value: "8080"
+      - key: DB_HOST
+        fromDatabase:
+          name: clinic-booking-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: clinic-booking-db
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: clinic-booking-db
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: clinic-booking-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: clinic-booking-db
+          property: password
+      - key: JWT_SECRET
+        generateValue: true
+      - key: COOKIES_SECURE
+        value: "true"
+      - key: FRONTEND_ORIGIN
+        value: "https://dharanijayachandran.github.io"
+      - key: ADMIN_EMAIL
+        value: admin@clinic.local
+      - key: ADMIN_PASSWORD
+        generateValue: true
