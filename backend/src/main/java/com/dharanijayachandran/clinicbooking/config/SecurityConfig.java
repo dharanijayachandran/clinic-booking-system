@@ -62,11 +62,22 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 // Stateless JWT auth still needs CSRF protection because the
                 // token travels in an auto-attached cookie, not a header the
-                // browser only sends when JS explicitly asks it to.
-                .csrf(csrf -> csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()))
+                // browser only sends when JS explicitly asks it to. register/
+                // login are exempted: there's no pre-existing authenticated
+                // session for either to ride on, so the risk CSRF exists to
+                // prevent isn't present — and exempting them is what lets the
+                // Swagger UI demo actually work without a manual token dance.
+                // Every endpoint that acts on an authenticated session
+                // (refresh, logout, and everything from Phase 3 on) keeps
+                // full CSRF enforcement.
+                .csrf(csrf -> csrf
+                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                        .ignoringRequestMatchers("/api/auth/register", "/api/auth/login"))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/register", "/api/auth/login", "/api/auth/refresh")
+                        .requestMatchers(
+                                "/api/auth/register", "/api/auth/login", "/api/auth/refresh",
+                                "/swagger-ui/**", "/v3/api-docs/**")
                         .permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(
