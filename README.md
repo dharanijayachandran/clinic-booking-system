@@ -25,18 +25,28 @@ Built incrementally, phase by phase, each reviewed before moving on:
 - [ ] Phase 7 — reschedule, cancel, doctor and admin views
 - [ ] Phase 8 — this README's full architecture write-up
 
-No live demo yet — a Java backend + Postgres needs real hosting (not
-possible via GitHub Pages, unlike this author's other portfolio
-projects), and there's no UI to demo before Phase 5. Revisit once the
-Angular frontend and booking flow exist.
+## Live demo
 
-## Running it
+Deployed via the Render Blueprint below — interactive API docs (there's
+no frontend yet — that's Phase 4+). Register a patient, log in, then
+call `/me`. _(Link added here once deployed.)_
+
+Free-tier hosting, so: the service spins down after 15 minutes idle
+(the first request after that takes ~30-50s to wake it up), and the
+free Postgres database expires after 30 days (redeploying the
+[Blueprint](render.yaml) recreates it — the Flyway migration rebuilds
+the schema automatically, nothing to restore since it's a demo
+database).
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/dharanijayachandran/clinic-booking-system)
+
+## Running it locally
 
 ```bash
 docker compose up
 ```
 
-- Backend: http://localhost:8080
+- Backend: http://localhost:8080 (Swagger UI: http://localhost:8080/swagger-ui.html)
 - Postgres: localhost:5432 (db `clinic`, user/password `clinic` — dev only)
 
 ## Architecture decisions
