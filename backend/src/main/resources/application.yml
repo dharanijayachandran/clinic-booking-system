@@ -23,7 +23,10 @@ spring:
     locations: classpath:db/migration
 
 server:
-  port: ${SERVER_PORT:8080}
+  # PORT is what Render (and most PaaS hosts) inject and route traffic to, so
+  # it wins when present. SERVER_PORT stays as the local/docker-compose knob,
+  # and 8080 is the fallback when neither is set.
+  port: ${PORT:${SERVER_PORT:8080}}
 
 app:
   jwt:

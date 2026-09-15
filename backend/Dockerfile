@@ -11,4 +11,7 @@ FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
 COPY --from=build /app/target/clinic-booking-backend-*.jar app.jar
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar"]
+# Container-aware heap sizing: the JVM's default max heap is a fraction of
+# host RAM, which is too tight on a 512MB free-tier instance once Hibernate,
+# Tomcat and Flyway are all up. SerialGC keeps GC overhead small at this size.
+ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75", "-XX:+UseSerialGC", "-jar", "app.jar"]

@@ -22,9 +22,11 @@ services:
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
     plan: free
+    # Render injects PORT and routes to it; application.yml reads PORT first,
+    # so it must NOT be pinned here or the app listens on the wrong port and
+    # every request hangs with no healthy instance behind the edge.
+    healthCheckPath: /v3/api-docs
     envVars:
-      - key: PORT
-        value: "8080"
       - key: DB_HOST
         fromDatabase:
           name: clinic-booking-db
