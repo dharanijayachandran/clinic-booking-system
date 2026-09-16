@@ -11,6 +11,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
 import { CalendarSlot, Doctor } from '../../core/models/booking.model';
+import { SlotEventsService } from '../../core/realtime/slot-events.service';
 import { BookingStore } from './booking.store';
 import {
   addDays,
@@ -44,6 +45,7 @@ type ViewMode = 'week' | 'month';
 })
 export class BookingCalendarComponent implements OnInit {
   protected readonly store = inject(BookingStore);
+  protected readonly slotEvents = inject(SlotEventsService);
   private readonly snackBar = inject(MatSnackBar);
 
   protected readonly view = signal<ViewMode>('week');
@@ -70,6 +72,9 @@ export class BookingCalendarComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    this.slotEvents.onSlotChanged((event) =>
+      this.store.applyExternalChange(event.slotId, event.status),
+    );
     this.store.loadDoctors();
     this.refresh();
   }
@@ -138,5 +143,10 @@ export class BookingCalendarComponent implements OnInit {
   private refresh(): void {
     const { from, to } = this.range();
     this.store.loadSlots(from, to);
+
+    const doctor = this.store.selectedDoctor();
+    if (doctor) {
+      this.slotEvents.watchDoctor(doctor.id);
+    }
   }
 }

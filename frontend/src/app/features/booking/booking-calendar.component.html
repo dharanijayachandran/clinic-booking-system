@@ -3,6 +3,11 @@
     <mat-card-title>Book an appointment</mat-card-title>
     <mat-card-subtitle>
       {{ store.bookableCount() }} slot{{ store.bookableCount() === 1 ? '' : 's' }} available in this view
+      @if (slotEvents.connected()) {
+        <span class="live" title="Availability updates as other people book">● live</span>
+      } @else {
+        <span class="offline" title="Reconnecting — availability may be out of date">○ offline</span>
+      }
     </mat-card-subtitle>
   </mat-card-header>
 

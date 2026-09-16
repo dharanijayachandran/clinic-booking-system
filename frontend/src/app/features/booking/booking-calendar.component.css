@@ -24,6 +24,18 @@
   color: #b3261e;
 }
 
+.live {
+  margin-left: 0.5rem;
+  color: #1b7f4f;
+  font-size: 0.75rem;
+}
+
+.offline {
+  margin-left: 0.5rem;
+  opacity: 0.6;
+  font-size: 0.75rem;
+}
+
 /*
  * One column per weekday on wide screens; a single scrolling column on
  * phones, because seven columns of 30-minute slots on a 390px screen is

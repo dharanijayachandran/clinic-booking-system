@@ -111,12 +111,50 @@ describe('BookingStore', () => {
     expect(store.bookableCount()).toBe(1);
   });
 
-  it('marks a slot taken when told externally (WebSocket, Phase 6)', () => {
-    loadOneSlot();
+  describe('live updates', () => {
+    it('greys out a slot someone else booked', () => {
+      loadOneSlot();
 
-    store.markTakenExternally('slot-1');
+      store.applyExternalChange('slot-1', 'BOOKED');
 
-    expect(store.slots()[0].status).toBe('BOOKED');
-    expect(store.bookableCount()).toBe(0);
+      expect(store.slots()[0].status).toBe('BOOKED');
+      expect(store.bookableCount()).toBe(0);
+    });
+
+    it('reopens a slot that was released', () => {
+      loadOneSlot();
+      store.applyExternalChange('slot-1', 'BOOKED');
+
+      store.applyExternalChange('slot-1', 'AVAILABLE');
+
+      expect(store.bookableCount()).toBe(1);
+    });
+
+    it('ignores events for slots not in the current view', () => {
+      loadOneSlot();
+
+      store.applyExternalChange('some-other-slot', 'BOOKED');
+
+      expect(store.slots()).toHaveLength(1);
+      expect(store.bookableCount()).toBe(1);
+    });
+
+    it('does not clobber a slot whose booking is still in flight', () => {
+      loadOneSlot();
+
+      store.book('slot-1', () => {});
+      expect(store.slots()[0].pending).toBe(true);
+
+      // The echo of our own booking (or a racing one) arrives mid-flight.
+      // Our request's response is authoritative, so this must not win.
+      store.applyExternalChange('slot-1', 'BOOKED');
+      expect(store.slots()[0].pending).toBe(true);
+
+      http.expectOne('/api/bookings').flush({ id: 'a-1' });
+
+      expect(store.slots()[0].pending).toBe(false);
+      expect(store.slots()[0].status).toBe('BOOKED');
+      expect(store.slots()[0].takenByOther).toBeFalsy();
+    });
   });
 });

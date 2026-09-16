@@ -106,9 +106,22 @@ export class BookingStore {
     });
   }
 
-  /** Applied when a WebSocket event arrives in Phase 6. */
-  markTakenExternally(slotId: string): void {
-    this.patch(slotId, { status: 'BOOKED' });
+  /**
+   * Applied when a live event says someone else changed a slot.
+   *
+   * A slot we're mid-booking is left alone: our own request is already in
+   * flight and its response is authoritative. Overwriting it here would
+   * either contradict a 201 we're about to receive, or duplicate the
+   * takenByOther flag the 409 path sets anyway — and the echo of our *own*
+   * booking arrives on this same topic.
+   */
+  applyExternalChange(slotId: string, status: 'AVAILABLE' | 'BOOKED' | 'BLOCKED'): void {
+    const slot = this.slotsSignal().find((candidate) => candidate.id === slotId);
+    if (!slot || slot.pending) {
+      return;
+    }
+
+    this.patch(slotId, { status });
   }
 
   private patch(slotId: string, changes: Partial<CalendarSlot>): void {
