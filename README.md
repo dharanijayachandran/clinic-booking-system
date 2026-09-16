@@ -20,7 +20,7 @@ Built incrementally, phase by phase, each reviewed before moving on:
 - [x] **Phase 2** — auth (register, login, JWT, roles)
 - [x] **Phase 3** — booking API with concurrency handling + concurrency test
 - [x] **Phase 4** — Angular shell, routing, auth guards
-- [ ] Phase 5 — calendar UI and booking flow
+- [x] **Phase 5** — calendar UI and booking flow
 - [ ] Phase 6 — WebSocket live availability
 - [ ] Phase 7 — reschedule, cancel, doctor and admin views
 - [ ] Phase 8 — this README's full architecture write-up
@@ -182,6 +182,34 @@ Full schema: [`backend/src/main/resources/db/migration/V1__init_schema.sql`](bac
   server — anything enforced only in the browser is enforced nowhere.
   The directive is structural, so hidden controls are absent from the
   DOM rather than merely invisible.
+
+### Optimistic booking, and why the rollback isn't symmetric (Phase 5)
+
+Clicking a slot marks it pending immediately, so the UI responds now
+rather than after a round trip. What happens next depends on *why* the
+server said no — and "undo the optimistic change" is not the same as
+"restore the previous state":
+
+- **409 Conflict** — someone else won the race. Restoring the slot to
+  AVAILABLE would be a lie, because it genuinely isn't available any
+  more. It stays taken, struck through, with an explanation.
+- **Anything else** (network, 500) — the server's state is unknown, so
+  the slot *is* restored and the user can retry.
+
+### CSRF with a cookie-based SPA
+
+Spring Security 6 defaults to `XorCsrfTokenRequestAttributeHandler`,
+which BREACH-masks the token and expects a masked value back, while
+`CookieCsrfTokenRepository` writes the **raw** token to `XSRF-TOKEN`. A
+SPA echoing that cookie in `X-XSRF-TOKEN` therefore never validates, and
+every state-changing request fails.
+
+Worse, the failure is disguised: `CsrfFilter` runs *before* the JWT
+filter, so the rejection happens while the request is still anonymous
+and surfaces as **401, not 403** — which sends you hunting for an
+authentication bug. `SpaCsrfTokenRequestHandler` applies Spring's
+documented fix: mask when rendering, resolve plainly when the request
+carries the header.
 
 ### Dependencies beyond the required stack, and why
 
