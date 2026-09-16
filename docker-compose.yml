@@ -36,7 +36,12 @@ services:
     ports:
       - "8080:8080"
 
-  # frontend service is added in Phase 4, once the Angular app exists.
+  frontend:
+    build: ./frontend
+    depends_on:
+      - backend
+    ports:
+      - "4200:80"
 
 volumes:
   clinic-db-data:
