@@ -73,6 +73,10 @@ public class SecurityConfig {
                 // full CSRF enforcement.
                 .csrf(csrf -> csrf
                         .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                        // Without this the SPA can never pass CSRF: the cookie
+                        // holds a raw token, the default handler expects a
+                        // masked one. See SpaCsrfTokenRequestHandler.
+                        .csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler())
                         .ignoringRequestMatchers("/api/auth/register", "/api/auth/login"))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 // Without this, Spring Security's stateless default is
