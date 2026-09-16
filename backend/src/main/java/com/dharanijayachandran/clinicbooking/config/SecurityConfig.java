@@ -87,7 +87,12 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/api/auth/register", "/api/auth/login", "/api/auth/refresh",
-                                "/swagger-ui/**", "/v3/api-docs/**")
+                                "/swagger-ui.html", "/swagger-ui/**",
+                                // Both forms, explicitly: this is also the
+                                // container health check path, and a 401 here
+                                // would make the platform think the app never
+                                // came up.
+                                "/v3/api-docs", "/v3/api-docs/**")
                         .permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(
