@@ -75,6 +75,15 @@ public class SecurityConfig {
                         .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                         .ignoringRequestMatchers("/api/auth/register", "/api/auth/login"))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                // Without this, Spring Security's stateless default is
+                // Http403ForbiddenEntryPoint, which answers 403 to requests
+                // that carry no credentials at all. For an API the distinction
+                // matters: 401 means "you aren't authenticated" (the client
+                // should log in or refresh), 403 means "you are, but you may
+                // not do this" (logging in again won't help).
+                .exceptionHandling(ex -> ex.authenticationEntryPoint(
+                        new org.springframework.security.web.authentication.HttpStatusEntryPoint(
+                                org.springframework.http.HttpStatus.UNAUTHORIZED)))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/api/auth/register", "/api/auth/login", "/api/auth/refresh",

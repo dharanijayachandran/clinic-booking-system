@@ -6,8 +6,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.dharanijayachandran.clinicbooking.support.DatabaseCleaner;
 import com.dharanijayachandran.clinicbooking.support.PostgresTestBase;
-import com.dharanijayachandran.clinicbooking.user.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,14 +28,14 @@ class AuthControllerTest extends PostgresTestBase {
     private ObjectMapper objectMapper;
 
     @Autowired
-    private UserRepository userRepository;
+    private DatabaseCleaner databaseCleaner;
 
     private static final String EMAIL = "patient@example.com";
     private static final String PASSWORD = "correct-horse-battery-staple";
 
     @BeforeEach
     void registerAPatient() throws Exception {
-        userRepository.deleteAll();
+        databaseCleaner.clean();
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(registerBody(EMAIL, PASSWORD)))
