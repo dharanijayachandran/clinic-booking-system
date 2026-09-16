@@ -19,7 +19,7 @@ Built incrementally, phase by phase, each reviewed before moving on:
 - [x] **Phase 1** — scaffold, Docker Compose, database schema
 - [x] **Phase 2** — auth (register, login, JWT, roles)
 - [x] **Phase 3** — booking API with concurrency handling + concurrency test
-- [ ] Phase 4 — Angular shell, routing, auth guards
+- [x] **Phase 4** — Angular shell, routing, auth guards
 - [ ] Phase 5 — calendar UI and booking flow
 - [ ] Phase 6 — WebSocket live availability
 - [ ] Phase 7 — reschedule, cancel, doctor and admin views
@@ -158,6 +158,30 @@ Full schema: [`backend/src/main/resources/db/migration/V1__init_schema.sql`](bac
   but needs its own dependency and manual memory/parallelism tuning. BCrypt
   ships with Spring Security, is adaptive-cost, and remains a fully
   defensible default for this project's threat model.
+
+### Frontend (Phase 4)
+
+- **The app talks to `/api` through a proxy, never to `:8080` directly**
+  (Angular dev server in development, nginx in the container). This is
+  load-bearing: auth lives in httpOnly cookies and CSRF uses the
+  double-submit pattern, and cross-origin the browser won't let JS on
+  `:4200` read a cookie set by `:8080` — so the CSRF token could never
+  be echoed back. Same-origin makes cookies, Angular's built-in XSRF
+  interceptor, and CORS all stop being problems at once.
+- **Auth state is a signal, not a `BehaviorSubject`.** Templates read
+  `currentUser()` directly: no async pipe, no manual subscription, and
+  OnPush components stay correct by default.
+- **No token ever touches JavaScript.** The frontend never sees, stores
+  or sends the JWT — the cookies are httpOnly precisely so an XSS
+  payload can't read them. The app only learns *who* it is, from `/me`.
+- **An `APP_INITIALIZER` restores the session before the first route
+  resolves**, so a page refresh isn't mistaken for a logout.
+- **Guards and `*appHasRole` are presentation only, and say so.** They
+  keep users out of pointless screens and hide controls they can't use;
+  they are not what protects the data. That's `@PreAuthorize` on the
+  server — anything enforced only in the browser is enforced nowhere.
+  The directive is structural, so hidden controls are absent from the
+  DOM rather than merely invisible.
 
 ### Dependencies beyond the required stack, and why
 
