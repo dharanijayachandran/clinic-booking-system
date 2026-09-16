@@ -33,6 +33,7 @@ services:
       FRONTEND_ORIGIN: http://localhost:4200
       ADMIN_EMAIL: admin@clinic.local
       ADMIN_PASSWORD: changeme123
+      DEMO_SEED: "true"
     ports:
       - "8080:8080"
 

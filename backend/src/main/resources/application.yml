@@ -43,3 +43,11 @@ app:
   admin:
     email: ${ADMIN_EMAIL:admin@clinic.local}
     password: ${ADMIN_PASSWORD:changeme123}
+  clinic:
+    timezone: ${CLINIC_TIMEZONE:UTC}
+  demo:
+    # Seeds demo doctors + slots so a fresh environment isn't an empty
+    # calendar. Real rows in the real database; the UI still only ever
+    # talks to the real API.
+    seed: ${DEMO_SEED:false}
+    password: ${DEMO_PASSWORD:demo12345}
