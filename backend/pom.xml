@@ -22,8 +22,7 @@
   </properties>
 
   <dependencies>
-    <!-- Phase 1: web + persistence + migrations. WebSocket (Phase 6) is added
-         when that phase needs it. -->
+    <!-- Phase 1: web + persistence + migrations. -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-web</artifactId>
@@ -43,6 +42,12 @@
       <groupId>org.springdoc</groupId>
       <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
       <version>2.6.0</version>
+    </dependency>
+
+    <!-- Phase 6: live availability over STOMP. -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-websocket</artifactId>
     </dependency>
 
     <!-- Phase 2: auth. -->

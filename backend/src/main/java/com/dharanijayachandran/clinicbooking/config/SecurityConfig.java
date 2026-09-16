@@ -92,6 +92,10 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/auth/register", "/api/auth/login", "/api/auth/refresh",
                                 "/swagger-ui.html", "/swagger-ui/**",
+                                // The STOMP handshake. Read-only broadcasts,
+                                // and the handshake still passes through the
+                                // JWT filter like any other request.
+                                "/ws/**",
                                 // Both forms, explicitly: this is also the
                                 // container health check path, and a 401 here
                                 // would make the platform think the app never

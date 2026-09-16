@@ -3,8 +3,10 @@ package com.dharanijayachandran.clinicbooking.booking;
 import com.dharanijayachandran.clinicbooking.slot.Slot;
 import com.dharanijayachandran.clinicbooking.slot.SlotRepository;
 import com.dharanijayachandran.clinicbooking.slot.SlotStatus;
+import com.dharanijayachandran.clinicbooking.slot.SlotStatusChangedEvent;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,10 +16,15 @@ public class BookingService {
 
     private final SlotRepository slotRepository;
     private final AppointmentRepository appointmentRepository;
+    private final ApplicationEventPublisher events;
 
-    public BookingService(SlotRepository slotRepository, AppointmentRepository appointmentRepository) {
+    public BookingService(
+            SlotRepository slotRepository,
+            AppointmentRepository appointmentRepository,
+            ApplicationEventPublisher events) {
         this.slotRepository = slotRepository;
         this.appointmentRepository = appointmentRepository;
+        this.events = events;
     }
 
     /**
@@ -63,14 +70,24 @@ public class BookingService {
                 .status(AppointmentStatus.CONFIRMED)
                 .build();
 
+        Appointment saved;
         try {
             // saveAndFlush so the unique-index violation surfaces here, inside
             // the try, rather than at transaction commit where it can't be
             // translated into a clean 409.
-            return appointmentRepository.saveAndFlush(appointment);
+            saved = appointmentRepository.saveAndFlush(appointment);
         } catch (DataIntegrityViolationException e) {
             throw new SlotNotAvailableException(slotId);
         }
+
+        // Published here, delivered only after this transaction commits (see
+        // SlotBroadcaster). Sending it now, inside the lock, would broadcast
+        // bookings that might still roll back — and would hold a contended
+        // row lock across network I/O.
+        events.publishEvent(
+                new SlotStatusChangedEvent(slotId, slot.getDoctorId(), SlotStatus.BOOKED));
+
+        return saved;
     }
 
     @Transactional(readOnly = true)
