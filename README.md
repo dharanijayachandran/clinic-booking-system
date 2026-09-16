@@ -18,7 +18,7 @@ Built incrementally, phase by phase, each reviewed before moving on:
 
 - [x] **Phase 1** — scaffold, Docker Compose, database schema
 - [x] **Phase 2** — auth (register, login, JWT, roles)
-- [ ] Phase 3 — booking API with concurrency handling + concurrency test
+- [x] **Phase 3** — booking API with concurrency handling + concurrency test
 - [ ] Phase 4 — Angular shell, routing, auth guards
 - [ ] Phase 5 — calendar UI and booking flow
 - [ ] Phase 6 — WebSocket live availability
@@ -71,7 +71,36 @@ makes the second transaction *wait*, then see the committed truth and
 get a clean rejection — instead of racing ahead and failing after
 already doing the work.
 
-Full write-up with the concurrency test and benchmarks lands in Phase 3.
+**How the race is actually won**, in `BookingService.book()`:
+
+1. `findByIdForUpdate` issues `SELECT … FOR UPDATE`. Postgres grants the
+   row lock to one transaction; every other transaction asking for the
+   same row *blocks there* until the winner commits.
+2. Only *then* is status checked — so it reads committed state, not a
+   stale snapshot. This ordering is the entire point: checking before
+   locking is the TOCTOU bug the method exists to avoid.
+3. The insert is still wrapped against `DataIntegrityViolationException`,
+   because the partial unique index is the real guarantee. If a refactor
+   ever loses the lock, the database still refuses two `CONFIRMED`
+   appointments per slot and the caller still gets a 409.
+
+**Why no lock timeout.** Postgres offers `FOR UPDATE NOWAIT` (fail
+instantly) and `SKIP LOCKED` (ignore locked rows). Neither fits: the
+loser blocking for a few milliseconds and then getting a definitive
+"that slot is taken" beats `NOWAIT`'s ambiguous "try again".
+`SKIP LOCKED` is the right tool for job queues ("grab any free row"),
+not for "I want *this* slot".
+
+**Why not `SERIALIZABLE`.** It would also prevent the double-book, but
+it taxes every transaction in the application and produces serialization
+failures that callers must retry. Explicit row locking solves one
+contended row precisely.
+
+**Proven, not asserted.** `BookingConcurrencyTest` holds two threads at
+a `CountDownLatch`, releases them together, and asserts exactly one
+succeeds, one is rejected, the database holds exactly one `CONFIRMED`
+appointment, and the slot ends `BOOKED`. A separate test bypasses the
+service entirely to prove the unique index stands on its own.
 
 ### Schema (Phase 1)
 
