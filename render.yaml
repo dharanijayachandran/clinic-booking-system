@@ -19,8 +19,10 @@ services:
   - type: web
     name: clinic-booking-backend
     runtime: docker
-    dockerfilePath: ./backend/Dockerfile
-    dockerContext: ./backend
+    # Root Dockerfile: builds the Angular app and bakes it into the Spring
+    # Boot jar, so the whole system is one service on one origin.
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
     plan: free
     # Render injects PORT and routes to it; application.yml reads PORT first,
     # so it must NOT be pinned here or the app listens on the wrong port and

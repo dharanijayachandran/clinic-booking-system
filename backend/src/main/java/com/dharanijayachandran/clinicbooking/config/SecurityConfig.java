@@ -102,7 +102,20 @@ public class SecurityConfig {
                                 // came up.
                                 "/v3/api-docs", "/v3/api-docs/**")
                         .permitAll()
-                        .anyRequest().authenticated())
+                        // Everything under /api stays deny-by-default.
+                        .requestMatchers("/api/**").authenticated()
+                        // Everything else is the Angular shell (index.html,
+                        // hashed JS/CSS, and client-side routes like /book).
+                        // It has to be public: a login page you must already
+                        // be logged in to fetch is not a login page. No data
+                        // lives here — the bundle is the same for everyone,
+                        // and every byte of real content comes from /api,
+                        // which is still authenticated above.
+                        //
+                        // Note this inverts the default for non-API paths, so
+                        // new server endpoints must live under /api to inherit
+                        // the deny-by-default rule.
+                        .anyRequest().permitAll())
                 .addFilterBefore(
                         new JwtAuthenticationFilter(jwtService, userRepository),
                         UsernamePasswordAuthenticationFilter.class);
