@@ -2,6 +2,8 @@ package com.dharanijayachandran.clinicbooking.common;
 
 import com.dharanijayachandran.clinicbooking.auth.EmailAlreadyRegisteredException;
 import com.dharanijayachandran.clinicbooking.auth.InvalidCredentialsException;
+import com.dharanijayachandran.clinicbooking.booking.SlotNotAvailableException;
+import com.dharanijayachandran.clinicbooking.booking.SlotNotFoundException;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -23,6 +25,21 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(InvalidCredentialsException.class)
     public ResponseEntity<Object> handleInvalidCredentials(InvalidCredentialsException ex) {
         return problem(HttpStatus.UNAUTHORIZED, ex.getMessage());
+    }
+
+    /**
+     * 409, not 400: the request was perfectly valid, it just lost the race for
+     * a contended slot. The client's correct response is "refresh and pick
+     * another", which is exactly what Conflict communicates.
+     */
+    @ExceptionHandler(SlotNotAvailableException.class)
+    public ResponseEntity<Object> handleSlotTaken(SlotNotAvailableException ex) {
+        return problem(HttpStatus.CONFLICT, ex.getMessage());
+    }
+
+    @ExceptionHandler(SlotNotFoundException.class)
+    public ResponseEntity<Object> handleSlotMissing(SlotNotFoundException ex) {
+        return problem(HttpStatus.NOT_FOUND, ex.getMessage());
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
