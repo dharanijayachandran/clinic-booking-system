@@ -1,0 +1,96 @@
+<mat-card>
+  <mat-card-header>
+    <mat-card-title>Book an appointment</mat-card-title>
+    <mat-card-subtitle>
+      {{ store.bookableCount() }} slot{{ store.bookableCount() === 1 ? '' : 's' }} available in this view
+    </mat-card-subtitle>
+  </mat-card-header>
+
+  <mat-card-content>
+    <div class="controls">
+      <mat-form-field appearance="outline" class="doctor-picker">
+        <mat-label>Doctor</mat-label>
+        <mat-select
+          [value]="store.selectedDoctor()"
+          (valueChange)="onDoctorChange($event)"
+          [compareWith]="compareDoctors"
+        >
+          @for (doctor of store.doctors(); track doctor.id) {
+            <mat-option [value]="doctor">{{ doctor.name }} — {{ doctor.specialty }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-button-toggle-group
+        [value]="view()"
+        (valueChange)="setView($event)"
+        aria-label="Calendar view"
+      >
+        <mat-button-toggle value="week">Week</mat-button-toggle>
+        <mat-button-toggle value="month">Month</mat-button-toggle>
+      </mat-button-toggle-group>
+
+      <div class="nav">
+        <button mat-icon-button (click)="move(-1)" aria-label="Previous">
+          <mat-icon>chevron_left</mat-icon>
+        </button>
+        <button mat-button (click)="today()">Today</button>
+        <button mat-icon-button (click)="move(1)" aria-label="Next">
+          <mat-icon>chevron_right</mat-icon>
+        </button>
+      </div>
+
+      <span class="heading">
+        {{ heading() | date: view() === 'week' ? 'd MMM y' : 'MMMM y' }}
+      </span>
+    </div>
+
+    @if (store.loading()) {
+      <mat-progress-bar mode="indeterminate" />
+    }
+
+    @if (store.error(); as error) {
+      <p class="error">{{ error }}</p>
+    }
+
+    <div class="calendar" [class.month-view]="view() === 'month'">
+      @for (day of days(); track day.key) {
+        <section class="day" [class.dim]="!day.inCurrentMonth" [class.today]="day.isToday">
+          <header>
+            <span class="dow">{{ day.date | date: 'EEE' }}</span>
+            <span class="dom">{{ day.date | date: 'd' }}</span>
+          </header>
+
+          @if (day.slots.length === 0) {
+            <p class="none">—</p>
+          } @else {
+            <ul class="slots">
+              @for (slot of day.slots; track slot.id) {
+                <li>
+                  <button
+                    type="button"
+                    class="slot"
+                    [class.pending]="slot.pending"
+                    [class.taken]="slot.takenByOther"
+                    [class.unavailable]="slot.status !== 'AVAILABLE' && !slot.takenByOther"
+                    [disabled]="!bookable(slot)"
+                    (click)="book(slot)"
+                    [attr.title]="
+                      slot.takenByOther
+                        ? 'Taken by someone else while you were booking'
+                        : slot.pending
+                          ? 'Booking…'
+                          : 'Book this slot'
+                    "
+                  >
+                    {{ slot.startsAt | date: 'HH:mm' }}
+                  </button>
+                </li>
+              }
+            </ul>
+          }
+        </section>
+      }
+    </div>
+  </mat-card-content>
+</mat-card>

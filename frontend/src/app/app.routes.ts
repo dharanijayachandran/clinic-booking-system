@@ -34,13 +34,15 @@ export const routes: Routes = [
         canActivate: [authGuard],
         loadComponent: () => import('./features/home/home.component').then((m) => m.HomeComponent),
       },
-      // Phase 5+ fills these in with real screens; the guard and nav wiring
-      // is what Phase 4 is proving, so they point at the placeholder for now.
       {
         path: 'book',
         canActivate: [authGuard, roleGuard('PATIENT')],
-        loadComponent: () => import('./features/home/home.component').then((m) => m.HomeComponent),
+        loadComponent: () =>
+          import('./features/booking/booking-calendar.component').then(
+            (m) => m.BookingCalendarComponent,
+          ),
       },
+      // Phase 7 fills these in; the guard and nav wiring is already proven.
       {
         path: 'appointments',
         canActivate: [authGuard, roleGuard('PATIENT')],

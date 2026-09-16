@@ -1,0 +1,132 @@
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.doctor-picker {
+  min-width: 15rem;
+  flex: 1 1 15rem;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+}
+
+.heading {
+  font-weight: 600;
+}
+
+.error {
+  color: #b3261e;
+}
+
+/*
+ * One column per weekday on wide screens; a single scrolling column on
+ * phones, because seven columns of 30-minute slots on a 390px screen is
+ * unusable. The month view keeps the 7-wide grid so the shape of the month
+ * stays readable.
+ */
+.calendar {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.5rem;
+}
+
+@media (min-width: 720px) {
+  .calendar {
+    grid-template-columns: repeat(7, 1fr);
+  }
+}
+
+.day {
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 8px;
+  padding: 0.5rem;
+  min-height: 6rem;
+}
+
+.day.dim {
+  opacity: 0.45;
+}
+
+.day.today {
+  border-color: #3f51b5;
+  border-width: 2px;
+}
+
+.day header {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  margin-bottom: 0.4rem;
+}
+
+.dow {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+.dom {
+  font-weight: 700;
+}
+
+.none {
+  margin: 0;
+  opacity: 0.4;
+}
+
+.slots {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+/* Month view gets dense time chips so a full month still fits. */
+.month-view .day {
+  min-height: 5rem;
+}
+
+.slot {
+  border: 1px solid #3f51b5;
+  background: #fff;
+  color: #3f51b5;
+  border-radius: 999px;
+  padding: 0.15rem 0.5rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.slot:hover:not([disabled]) {
+  background: #3f51b5;
+  color: #fff;
+}
+
+.slot[disabled] {
+  cursor: default;
+}
+
+.slot.pending {
+  opacity: 0.6;
+  border-style: dashed;
+}
+
+/* Lost the race: greyed and struck through, not silently removed, so the
+   user can see what happened to the slot they just clicked. */
+.slot.taken {
+  border-color: rgba(0, 0, 0, 0.26);
+  color: rgba(0, 0, 0, 0.38);
+  text-decoration: line-through;
+}
+
+.slot.unavailable {
+  border-color: rgba(0, 0, 0, 0.26);
+  color: rgba(0, 0, 0, 0.38);
+}
