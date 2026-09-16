@@ -21,7 +21,7 @@ Built incrementally, phase by phase, each reviewed before moving on:
 - [x] **Phase 3** — booking API with concurrency handling + concurrency test
 - [x] **Phase 4** — Angular shell, routing, auth guards
 - [x] **Phase 5** — calendar UI and booking flow
-- [ ] Phase 6 — WebSocket live availability
+- [x] **Phase 6** — WebSocket live availability
 - [ ] Phase 7 — reschedule, cancel, doctor and admin views
 - [ ] Phase 8 — this README's full architecture write-up
 
@@ -195,6 +195,26 @@ server said no — and "undo the optimistic change" is not the same as
   more. It stays taken, struck through, with an explanation.
 - **Anything else** (network, 500) — the server's state is unknown, so
   the slot *is* restored and the user can retry.
+
+### Live availability (Phase 6)
+
+- **The broadcast fires `AFTER_COMMIT`, never inside the booking
+  transaction.** Doing it inside would hold the contended row lock
+  across network I/O, and a rollback would leave every client believing
+  a slot was taken when it's still free, with nothing to correct them.
+- **Per-doctor topics** (`/topic/slots/{doctorId}`), so browsing one
+  calendar doesn't wake the client for every booking in the clinic.
+- **A failed broadcast never fails the booking** — it's already
+  committed; the client just finds out on its next refresh.
+- **The simple broker is a known limitation, not an oversight.**
+  Subscriptions live in one JVM's memory, so a second backend instance
+  wouldn't see the first's events. Correct for a single instance; the
+  honest answer for scaling out is a broker relay (RabbitMQ) or Redis
+  pub/sub.
+- **An in-flight booking is never clobbered by a live event.** The echo
+  of your own booking arrives on the same topic, so letting it win would
+  contradict the `201` about to arrive, or duplicate what the `409` path
+  already handles.
 
 ### CSRF with a cookie-based SPA
 
